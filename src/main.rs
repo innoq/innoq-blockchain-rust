@@ -45,13 +45,11 @@ impl Handler for BlockchainHandler {
             b
         };
 
-        let response_text = blockchain.blocks[0].to_json();
-
         let res = {
             create_response(
                 &state,
                 StatusCode::Ok,
-                Some((response_text.into_bytes(), mime::TEXT_PLAIN)),
+                Some((blockchain.to_json().into_bytes(), mime::APPLICATION_JSON)),
             )
         };
         Box::new(future::ok((state, res)))
