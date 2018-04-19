@@ -48,7 +48,12 @@ where
 
 impl ToJSON for Transaction {
     fn to_json(&self) -> String {
-        "{}".to_string()
+        let id: &str = &self.id;
+        let payload: &str = &self.payload;
+        format!(r#"{{"id":{},"timestamp":{},"payload":{}}}"#,
+                id.to_json(),
+                self.timestamp.to_json(),
+                payload.to_json())
     }
 }
 
@@ -68,10 +73,10 @@ fn it_works() {
     assert_eq!("asdf\"asdf".to_json(), "\"asdf\\\"asdf\"");
     assert_eq!(
         Transaction{
-            id: "".to_string(),
+            id: "\"".to_string(),
             payload: "a".to_string(),
             timestamp: 1
         }.to_json(),
-        "{}");
+        r#"{"id":"\"","timestamp":1,"payload":"a"}"#);
     assert_eq!(vec![1 as u64, 2, 3].to_json(), "[1,2,3]");
 }
