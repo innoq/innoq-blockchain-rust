@@ -60,8 +60,24 @@ impl ToJSON for Transaction {
 impl ToJSON for Block {
     fn to_json(&self) -> String {
         let mut json: String = String::from("{");
+        add_property(&mut json, "index", self.index, false);
+        add_property(&mut json, "timestamp", self.timestamp, false);
+        add_property(&mut json, "proof", self.proof, false);
+        add_property(&mut json, "transactions", self.transactions, false);
+        add_property(&mut json, "previousBlockHash", self.previous_block_hash.as_str(), false);
         json.push_str("}");
         json
+    }
+}
+
+fn add_property<V>(json: &mut String, name: &str, value: V, last: bool)
+    where V: ToJSON {
+    json.push_str("\"");
+    json.push_str(name);
+    json.push_str(":\"");
+    json.push_str(value.to_json().as_str());
+    if !last {
+        json.push_str(",");
     }
 }
 
