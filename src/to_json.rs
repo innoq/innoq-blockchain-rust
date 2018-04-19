@@ -48,13 +48,11 @@ where
 
 impl ToJSON for Transaction {
     fn to_json(&self) -> String {
-        let id: &str = &self.id;
-        let payload: &str = &self.payload;
         format!(
             r#"{{"id":{},"timestamp":{},"payload":{}}}"#,
-            id.to_json(),
+            self.id.as_str().to_json(),
             self.timestamp.to_json(),
-            payload.to_json()
+            self.payload.as_str().to_json()
         )
     }
 }
