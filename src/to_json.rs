@@ -57,6 +57,16 @@ impl ToJSON for Transaction {
     }
 }
 
+impl ToJSON for Blockchain {
+    fn to_json(&self) -> String {
+        format!(
+            r#"{{"blocks":{},"blockHeight":{}}}"#,
+            (&self.blocks).to_json(),
+            self.block_height.to_json()
+        )
+    }
+}
+
 impl ToJSON for Block {
     fn to_json(&self) -> String {
         let mut json: String = String::from("{");
@@ -109,6 +119,6 @@ fn it_works() {
 fn genesis() {
     let chain = Blockchain::new();
     assert_eq!(
-        (&chain.blocks).to_json(),
-        r#"[{"index":1,"timestamp":0,"proof":1917336,"transactions":[{"id":"b3c973e2-db05-4eb5-9668-3e81c7389a6d","timestamp":0,"payload":"I am Heribert Innoq"}],"previousBlockHash":"0"}]"#);
+        chain.to_json(),
+        r#"{"blocks":[{"index":1,"timestamp":0,"proof":1917336,"transactions":[{"id":"b3c973e2-db05-4eb5-9668-3e81c7389a6d","timestamp":0,"payload":"I am Heribert Innoq"}],"previousBlockHash":"0"}],"blockHeight":1}"#);
 }
