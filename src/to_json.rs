@@ -1,6 +1,6 @@
 extern crate serde_json;
 
-use block::{Block, Transaction};
+use block::{Block, Blockchain, Transaction};
 
 pub trait ToJSON {
     fn to_json(&self) -> String;
@@ -116,4 +116,12 @@ fn it_works() {
         }],
         previous_block_hash: "0".to_string(),
     }.to_json(), "{\"index\":1,\"timestamp\":0,\"proof\":1917336,\"transactions\":[{\"id\":\"b3c973e2-db05-4eb5-9668-3e81c7389a6d\",\"timestamp\":0,\"payload\":\"I am Heribert Innoq\"}],\"previousBlockHash\":\"0\"}");
+}
+
+#[test]
+fn genesis() {
+    let chain = Blockchain::new();
+    assert_eq!(
+        (&chain.blocks).to_json(),
+        r#"[{"index":1,"timestamp":0,"proof":1917336,"transactions":[{"id":"b3c973e2-db05-4eb5-9668-3e81c7389a6d","timestamp":0,"payload":"I am Heribert Innoq"}],"previousBlockHash":"0"}]"#);
 }
