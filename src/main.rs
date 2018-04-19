@@ -2,6 +2,7 @@ extern crate gotham;
 extern crate hyper;
 extern crate mime;
 extern crate futures;
+extern crate crypto_hash;
 
 use std::time::SystemTime;
 use std::sync::{Arc, Mutex};
@@ -9,6 +10,7 @@ use std::sync::{Arc, Mutex};
 
 mod to_json;
 mod block;
+mod calculate_proof;
 
 use hyper::{Response, StatusCode};
 use gotham::handler::{Handler, HandlerFuture, NewHandler};

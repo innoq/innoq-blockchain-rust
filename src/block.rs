@@ -13,7 +13,19 @@ pub struct Block {
     pub previous_block_hash: String,
 }
 
-#[derive(PartialEq, Debug)]
+impl Block {
+    pub fn with_proof(&self, proof: u64) -> Block {
+        Block {
+            index: self.index.clone(),
+            timestamp: self.timestamp.clone(),
+            proof: proof,
+            transactions: self.transactions.clone(),
+            previous_block_hash: self.previous_block_hash.clone()
+        }
+    }
+}
+
+#[derive(PartialEq, Debug, Clone)]
 pub struct Transaction {
     pub id: String,
     pub timestamp: u64,
