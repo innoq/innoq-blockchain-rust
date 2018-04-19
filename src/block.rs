@@ -3,6 +3,7 @@ pub struct Blockchain {
     pub block_height: u64,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct Block {
     pub index: u64,
     pub timestamp: u64,
@@ -11,6 +12,7 @@ pub struct Block {
     pub previous_block_hash: String,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct Transaction {
     pub id: String,
     pub timestamp: u64,
