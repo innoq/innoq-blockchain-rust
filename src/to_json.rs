@@ -1,5 +1,7 @@
 extern crate serde_json;
 
+use block::Block;
+
 pub trait ToJSON {
     fn to_json(&self) -> String;
 }
@@ -41,6 +43,14 @@ where
         acc.pop();
         acc += "]";
         acc
+    }
+}
+
+impl ToJSON for Block {
+    fn to_json(&self) -> String {
+        let mut json: String = String::from("{");
+        json.push_str("}");
+        json
     }
 }
 

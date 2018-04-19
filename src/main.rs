@@ -3,6 +3,7 @@ extern crate hyper;
 extern crate mime;
 
 mod to_json;
+mod block;
 
 use hyper::{Response, StatusCode};
 

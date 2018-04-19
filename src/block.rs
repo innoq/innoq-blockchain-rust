@@ -1,18 +1,18 @@
 pub struct Blocks {
-    blocks: [Block],
-    blockHeight: u64,
+    pub blocks: Vec<Block>,
+    pub block_height: u64,
 }
 
 pub struct Block {
-    index: u64,
-    timestamp: u64,
-    proof: u64,
-    transactions: [Transaction],
-    previous_block_hash: String,
+    pub index: u64,
+    pub timestamp: u64,
+    pub proof: u64,
+    pub transactions: Vec<Transaction>,
+    pub previous_block_hash: String,
 }
 
 pub struct Transaction {
-    id: String,
-    timestamp: u64,
-    payload: String,
+    pub id: String,
+    pub timestamp: u64,
+    pub payload: String,
 }
