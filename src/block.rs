@@ -1,3 +1,4 @@
+#[derive(Debug)]
 pub struct Blockchain {
     pub blocks: Vec<Block>,
     pub block_height: u64,
