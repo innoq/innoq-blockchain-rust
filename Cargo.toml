@@ -1,0 +1,6 @@
+[package]
+name = "ibr"
+version = "0.1.0"
+authors = ["Heribert Innoq"]
+
+[dependencies]
