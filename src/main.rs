@@ -2,6 +2,8 @@ extern crate gotham;
 extern crate hyper;
 extern crate mime;
 
+mod to_json;
+
 use hyper::{Response, StatusCode};
 
 use gotham::http::response::create_response;
