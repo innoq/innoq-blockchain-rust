@@ -1,3 +1,8 @@
+pub struct Blocks {
+    blocks: [Block],
+    blockHeight: u64,
+}
+
 pub struct Block {
     index: u64,
     timestamp: u64,
