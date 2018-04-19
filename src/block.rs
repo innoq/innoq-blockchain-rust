@@ -1,10 +1,10 @@
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Blockchain {
     pub blocks: Vec<Block>,
     pub block_height: u64,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct Block {
     pub index: u64,
     pub timestamp: u64,
@@ -25,7 +25,7 @@ impl Block {
     }
 }
 
-#[derive(PartialEq, Debug, Clone)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct Transaction {
     pub id: String,
     pub timestamp: u64,
@@ -33,6 +33,12 @@ pub struct Transaction {
 }
 
 impl Blockchain {
+    pub fn add(&self) -> Blockchain {
+        let mut foo = self.clone();
+        foo.block_height +=1;
+        foo
+    }
+
     pub fn new() -> Blockchain {
         return Blockchain {
             block_height: 1,

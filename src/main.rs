@@ -12,16 +12,16 @@ mod to_json;
 mod block;
 mod calculate_proof;
 
-use hyper::{Response, StatusCode};
+use hyper::{Response, StatusCode, Method};
 use gotham::handler::{Handler, HandlerFuture, NewHandler};
 use futures::future;
 
 use gotham::http::response::create_response;
-use gotham::state::State;
 use gotham::router::builder::*;
 use gotham::router::Router;
 use block::Blockchain;
 use to_json::ToJSON;
+use gotham::state::{FromState, State};
 
 #[derive(Clone, Debug)]
 struct BlockchainHandler {
@@ -40,17 +40,22 @@ impl BlockchainHandler {
 
 impl Handler for BlockchainHandler {
     fn handle(self, state: State) -> Box<HandlerFuture> {
-        let uptime = SystemTime::now().duration_since(self.started_at).unwrap();
 
-        let blockchain = {
-            let mut b = self.blockchain.lock().unwrap();
-            b
-        };
+        let mut status_code = StatusCode::Ok;
+
+        let mut blockchain =  self.blockchain.lock().unwrap();
+
+        if Method::borrow_from(&state) == &Method::Post {
+
+            status_code = StatusCode::Created;
+
+            *blockchain = blockchain.add();
+        }
 
         let res = {
             create_response(
                 &state,
-                StatusCode::Ok,
+                status_code,
                 Some((blockchain.to_json().into_bytes(), mime::APPLICATION_JSON)),
             )
         };
@@ -78,11 +83,13 @@ pub fn say_hello(state: State) -> (State, Response) {
 }
 
 fn router() -> Router {
+    let blockchain_handler = BlockchainHandler::new();
+
     build_simple_router(|route| {
         route.get("/").to(say_hello);
         route.get("/mine").to(say_hello);
-        route.get("/blocks").to_new_handler(BlockchainHandler::new());
-        route.post("/blocks").to(say_hello);
+        route.get("/blocks").to_new_handler(blockchain_handler.clone());
+        route.post("/blocks").to_new_handler(blockchain_handler.clone());
     })
 }
 
