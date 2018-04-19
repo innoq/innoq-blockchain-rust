@@ -22,23 +22,23 @@ pub struct Transaction {
 impl Blockchain {
     pub fn new() -> Blockchain {
         return Blockchain {
-            block_height:  1,
+            block_height: 1,
             blocks: vec![
-                Block{
+                Block {
                     index: 1,
                     timestamp: 0,
                     proof: 1917336,
                     transactions: vec![
-                        Transaction{
+                        Transaction {
                             id: String::from("b3c973e2-db05-4eb5-9668-3e81c7389a6d"),
                             timestamp: 0,
                             payload: String::from("I am Heribert Innoq"),
-                        }
+                        },
                     ],
                     previous_block_hash: String::from("0"),
-                }
-            ]
-        }
+                },
+            ],
+        };
     }
 }
 

@@ -28,7 +28,6 @@ fn router() -> Router {
         route.get("/mine").to(say_hello);
         route.get("/blocks").to(say_hello);
         route.post("/blocks").to(say_hello);
-
     })
 }
 pub fn main() {
