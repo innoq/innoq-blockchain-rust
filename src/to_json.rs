@@ -103,17 +103,6 @@ fn it_works() {
         r#"{"id":"\"","timestamp":1,"payload":"a"}"#
     );
     assert_eq!((&vec![1 as u64, 2, 3]).to_json(), "[1,2,3]");
-    assert_eq!(Block{
-        index: 1,
-        timestamp: 0,
-        proof: 1917336,
-        transactions: vec![Transaction{
-            id: "b3c973e2-db05-4eb5-9668-3e81c7389a6d".to_string(),
-            timestamp: 0,
-            payload: "I am Heribert Innoq".to_string(),
-        }],
-        previous_block_hash: "0".to_string(),
-    }.to_json(), r#"{"index":1,"timestamp":0,"proof":1917336,"transactions":[{"id":"b3c973e2-db05-4eb5-9668-3e81c7389a6d","timestamp":0,"payload":"I am Heribert Innoq"}],"previousBlockHash":"0"}"#);
 }
 
 #[test]
