@@ -6,6 +6,8 @@ use hyper::{Response, StatusCode};
 
 use gotham::http::response::create_response;
 use gotham::state::State;
+use gotham::router::builder::*;
+use gotham::router::Router;
 
 pub fn say_hello(state: State) -> (State, Response) {
     let res = create_response(
@@ -17,11 +19,20 @@ pub fn say_hello(state: State) -> (State, Response) {
     (state, res)
 }
 
+fn router() -> Router {
+    build_simple_router(|route| {
+        route.get("/").to(say_hello);
+        route.get("/mine").to(say_hello);
+        route.get("/blocks").to(say_hello);
+        route.post("/blocks").to(say_hello);
+
+    })
+}
 pub fn main() {
     println!("Hello, world!");
 
     let addr = "127.0.0.1:7878";
 
     println!("Listening for requests at http://{}", addr);
-    gotham::start(addr, || Ok(say_hello))
+    gotham::start(addr, router())
 }
