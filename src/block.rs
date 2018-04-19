@@ -1,6 +1,6 @@
 pub struct Blocks {
     blocks: [Block],
-    blockHeight: u64,
+    block_height: u64,
 }
 
 pub struct Block {
