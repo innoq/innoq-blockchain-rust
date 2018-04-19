@@ -1,4 +1,4 @@
-struct Block {
+pub struct Block {
     index: u64,
     timestamp: u64,
     proof: u64,
@@ -6,7 +6,7 @@ struct Block {
     previous_block_hash: String,
 }
 
-struct Transaction {
+pub struct Transaction {
     id: String,
     timestamp: u64,
     payload: String,
