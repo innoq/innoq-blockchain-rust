@@ -28,10 +28,25 @@ impl<'a> ToJSON for &'a str {
     }
 }
 
+impl<T> ToJSON for Vec<T>
+where T : ToJSON {
+    fn to_json(&self) -> String {
+        let mut acc = "[".to_string();
+        for elem in self {
+            acc += &elem.to_json();
+            acc += ",";
+        }
+        acc.pop();
+        acc += "]";
+        acc
+    }
+}
+
 #[test]
 fn it_works() {
     assert_eq!((5 as u64).to_json(), "5");
     assert_eq!((5 as i64).to_json(), "5");
     assert_eq!(5.2.to_json(), "5.2");
     assert_eq!("asdf\"asdf".to_json(), "\"asdf\\\"asdf\"");
+    assert_eq!(vec!(1 as u64, 2, 3).to_json(), "[1,2,3]");
 }
