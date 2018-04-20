@@ -5,9 +5,7 @@ extern crate hyper;
 extern crate mime;
 extern crate rayon;
 
-use std::time::SystemTime;
 use std::sync::{Arc, Mutex};
-use std::ops::DerefMut;
 
 mod to_json;
 mod block;
@@ -39,11 +37,11 @@ impl ServerState {
     }
 }
 
-fn get_blocks_handler(mut state: State) -> Box<HandlerFuture> {
-    let mut server_state = state.borrow_mut::<InjectedStateData>().state.clone();
-    let mut status_code = StatusCode::Ok;
+fn get_blocks_handler(state: State) -> Box<HandlerFuture> {
+    let server_state = state.borrow::<InjectedStateData>().state.clone();
+    let status_code = StatusCode::Ok;
 
-    let mut blockchain = &server_state.lock().unwrap().blockchain;
+    let blockchain = &server_state.lock().unwrap().blockchain;
 
     let res = {
         create_response(
@@ -57,9 +55,8 @@ fn get_blocks_handler(mut state: State) -> Box<HandlerFuture> {
 
 fn mine_handler(mut state: State) -> Box<HandlerFuture> {
     let arc = state.borrow_mut::<InjectedStateData>().state.clone();
-    let mut guard = arc.lock().unwrap();
-    let mut server_state = guard.deref_mut();
-    let mut status_code = StatusCode::Created;
+    let mut server_state = arc.lock().unwrap();
+    let status_code = StatusCode::Created;
 
     let block = server_state.blockchain.generate_next_block();
     let new_chain = server_state.blockchain.add(block);
@@ -76,7 +73,7 @@ fn mine_handler(mut state: State) -> Box<HandlerFuture> {
 }
 
 pub fn say_hello(mut state: State) -> (State, Response) {
-    let mut server_state = state.borrow_mut::<InjectedStateData>().state.clone();
+    let server_state = state.borrow_mut::<InjectedStateData>().state.clone();
     eprintln!("{:?}", server_state.lock().unwrap().blockchain);
     let res = create_response(
         &state,
