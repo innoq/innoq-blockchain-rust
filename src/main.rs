@@ -3,6 +3,7 @@ extern crate hyper;
 extern crate mime;
 extern crate futures;
 extern crate crypto_hash;
+extern crate rayon;
 
 use std::time::SystemTime;
 use std::sync::{Arc, Mutex};
