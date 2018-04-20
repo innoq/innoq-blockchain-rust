@@ -53,6 +53,6 @@ fn calculate_proof_matches() {
 
     let expected_proof: u64 = 8334;
 
-    let proven_block = calculate_proof(&original_block, 2);
+    let proven_block = calculate_proof(&original_block, 4);
     assert_eq!(expected_proof, proven_block.proof);
 }
