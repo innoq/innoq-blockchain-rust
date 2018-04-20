@@ -1,3 +1,9 @@
+use std::time::{SystemTime, UNIX_EPOCH};
+use crypto_hash::digest;
+use crypto_hash::Algorithm;
+use to_json::ToJSON;
+use calculate_proof::calculate_proof;
+
 #[derive(Clone, Debug)]
 pub struct Blockchain {
     pub blocks: Vec<Block>,
@@ -32,11 +38,31 @@ pub struct Transaction {
     pub payload: String,
 }
 
+fn hex_string_from(bytes: Vec<u8>) -> String {
+    let strs: Vec<String> = bytes.iter()
+        .map(|b| format!("{:02X}", b))
+        .collect();
+    strs.join("")
+}
+
 impl Blockchain {
-    pub fn add(&self) -> Blockchain {
-        let mut foo = self.clone();
-        foo.block_height +=1;
-        foo
+    pub fn add(&self, block: Block) -> Blockchain {
+        let mut new_chain = self.clone();
+        new_chain.block_height += 1;
+        new_chain.blocks.push(block);
+        new_chain
+    }
+
+    pub fn generate_next_block(&self) -> Block {
+        let prev = self.blocks.last().expect("heribert is always there");
+        let new_block = Block {
+            index: prev.index + 1,
+            timestamp: SystemTime::now().duration_since(UNIX_EPOCH).expect("time went backwards").as_secs(),
+            proof: 0,
+            transactions: Vec::new(),
+            previous_block_hash: hex_string_from(digest(Algorithm::SHA256, prev.to_json().as_bytes())),
+        };
+        calculate_proof(&new_block, 6)
     }
 
     pub fn new() -> Blockchain {

@@ -7,6 +7,7 @@ extern crate rayon;
 
 use std::time::SystemTime;
 use std::sync::{Arc, Mutex};
+use std::ops::DerefMut;
 
 mod to_json;
 mod block;
@@ -32,6 +33,12 @@ struct ServerState {
     candidates: Vec<Transaction>,
 }
 
+impl ServerState {
+    fn update(&mut self, blockchain: Blockchain) {
+        self.blockchain = blockchain;
+    }
+}
+
 fn get_blocks_handler(mut state: State) -> Box<HandlerFuture> {
     let mut server_state = state.borrow_mut::<InjectedStateData>().state.clone();
     let mut status_code = StatusCode::Ok;
@@ -43,6 +50,26 @@ fn get_blocks_handler(mut state: State) -> Box<HandlerFuture> {
             &state,
             status_code,
             Some((blockchain.to_json().into_bytes(), mime::APPLICATION_JSON)),
+        )
+    };
+    Box::new(future::ok((state, res)))
+}
+
+fn mine_handler(mut state: State) -> Box<HandlerFuture> {
+    let arc = state.borrow_mut::<InjectedStateData>().state.clone();
+    let mut guard = arc.lock().unwrap();
+    let mut server_state = guard.deref_mut();
+    let mut status_code = StatusCode::Created;
+
+    let block = server_state.blockchain.generate_next_block();
+    let new_chain = server_state.blockchain.add(block);
+    server_state.update(new_chain);
+
+    let res = {
+        create_response(
+            &state,
+            status_code,
+            Some((server_state.blockchain.to_json().into_bytes(), mime::APPLICATION_JSON)),
         )
     };
     Box::new(future::ok((state, res)))
@@ -102,7 +129,7 @@ fn router() -> Router {
 
     build_router(chain, pipelines, |route| {
         route.get("/").to(say_hello);
-        route.get("/mine").to(say_hello);
+        route.get("/mine").to(mine_handler);
         route.get("/blocks").to(get_blocks_handler);
     })
 }

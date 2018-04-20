@@ -20,7 +20,7 @@ fn prove_range(block: &Block, number_of_zeroes: usize, range: Range<u64>) -> Opt
     None
 }
 
-fn calculate_proof(block: &Block, number_of_zeroes: usize) -> Block {
+pub fn calculate_proof(block: &Block, number_of_zeroes: usize) -> Block {
     let chunk_size = 10_000;
     let found = (0..(u64::max_value() / chunk_size))
         .into_par_iter()

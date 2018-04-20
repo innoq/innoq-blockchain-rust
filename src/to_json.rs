@@ -40,7 +40,9 @@ where
             acc += &elem.to_json();
             acc += ",";
         }
-        acc.pop();
+        if acc.len() > 1 {
+            acc.pop();
+        }
         acc += "]";
         acc
     }
