@@ -20,38 +20,37 @@ use futures::future;
 use gotham::http::response::create_response;
 use gotham::router::builder::*;
 use gotham::router::Router;
-use block::Blockchain;
+use block::{Blockchain, Transaction};
 use to_json::ToJSON;
 use gotham::state::{FromState, State};
 
-#[derive(Clone, Debug)]
-struct BlockchainHandler {
-    started_at: SystemTime,
-    blockchain: Arc<Mutex<Blockchain>>,
+#[derive(Debug)]
+struct ServerState {
+    blockchain: Blockchain,
+    candidates: Vec<Transaction>,
 }
 
-impl BlockchainHandler {
-    fn new() -> BlockchainHandler {
-        BlockchainHandler {
+#[derive(Clone, Debug)]
+struct GetBlocksHandler {
+    started_at: SystemTime,
+    state: Arc<Mutex<ServerState>>,
+}
+
+impl GetBlocksHandler {
+    fn new(state: Arc<Mutex<ServerState>>) -> GetBlocksHandler {
+        GetBlocksHandler {
             started_at: SystemTime::now(),
-            blockchain: Arc::new(Mutex::new(Blockchain::new())),
+            state: state,
         }
     }
 }
 
-impl Handler for BlockchainHandler {
+impl Handler for GetBlocksHandler {
     fn handle(self, state: State) -> Box<HandlerFuture> {
 
         let mut status_code = StatusCode::Ok;
 
-        let mut blockchain =  self.blockchain.lock().unwrap();
-
-        if Method::borrow_from(&state) == &Method::Post {
-
-            status_code = StatusCode::Created;
-
-            *blockchain = blockchain.add();
-        }
+        let mut blockchain = &self.state.lock().unwrap().blockchain;
 
         let res = {
             create_response(
@@ -64,14 +63,13 @@ impl Handler for BlockchainHandler {
     }
 }
 
-impl NewHandler for BlockchainHandler {
+impl NewHandler for GetBlocksHandler {
     type Instance = Self;
 
     fn new_handler(&self) -> std::io::Result<Self::Instance> {
         Ok(self.clone())
     }
 }
-
 
 pub fn say_hello(state: State) -> (State, Response) {
     let res = create_response(
@@ -84,13 +82,15 @@ pub fn say_hello(state: State) -> (State, Response) {
 }
 
 fn router() -> Router {
-    let blockchain_handler = BlockchainHandler::new();
+    let state = Arc::new(Mutex::new(ServerState {
+        blockchain: Blockchain::new(),
+        candidates: Vec::new(),
+    }));
 
     build_simple_router(|route| {
         route.get("/").to(say_hello);
         route.get("/mine").to(say_hello);
-        route.get("/blocks").to_new_handler(blockchain_handler.clone());
-        route.post("/blocks").to_new_handler(blockchain_handler.clone());
+        route.get("/blocks").to_new_handler(GetBlocksHandler::new(state.clone()));
     })
 }
 
