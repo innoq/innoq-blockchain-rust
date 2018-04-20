@@ -12,8 +12,8 @@ mod to_json;
 mod block;
 mod calculate_proof;
 
-use hyper::{Method, Response, StatusCode};
-use gotham::handler::{Handler, HandlerFuture, NewHandler};
+use hyper::{Response, StatusCode};
+use gotham::handler::HandlerFuture;
 use futures::future;
 
 use gotham::middleware::{Middleware, NewMiddleware};
@@ -24,7 +24,7 @@ use gotham::pipeline::new_pipeline;
 use gotham::pipeline::single::single_pipeline;
 use block::{Blockchain, Transaction};
 use to_json::ToJSON;
-use gotham::state::{FromState, State, StateData};
+use gotham::state::{State, StateData};
 
 #[derive(Debug)]
 struct ServerState {
@@ -32,44 +32,20 @@ struct ServerState {
     candidates: Vec<Transaction>,
 }
 
-#[derive(Clone, Debug)]
-struct GetBlocksHandler {
-    started_at: SystemTime,
-    state: Arc<Mutex<ServerState>>,
-}
+fn get_blocks_handler(mut state: State) -> Box<HandlerFuture> {
+    let mut server_state = state.borrow_mut::<ExampleMiddlewareData>().state.clone();
+    let mut status_code = StatusCode::Ok;
 
-impl GetBlocksHandler {
-    fn new(state: Arc<Mutex<ServerState>>) -> GetBlocksHandler {
-        GetBlocksHandler {
-            started_at: SystemTime::now(),
-            state: state,
-        }
-    }
-}
+    let mut blockchain = &server_state.lock().unwrap().blockchain;
 
-impl Handler for GetBlocksHandler {
-    fn handle(self, state: State) -> Box<HandlerFuture> {
-        let mut status_code = StatusCode::Ok;
-
-        let mut blockchain = &self.state.lock().unwrap().blockchain;
-
-        let res = {
-            create_response(
-                &state,
-                status_code,
-                Some((blockchain.to_json().into_bytes(), mime::APPLICATION_JSON)),
-            )
-        };
-        Box::new(future::ok((state, res)))
-    }
-}
-
-impl NewHandler for GetBlocksHandler {
-    type Instance = Self;
-
-    fn new_handler(&self) -> std::io::Result<Self::Instance> {
-        Ok(self.clone())
-    }
+    let res = {
+        create_response(
+            &state,
+            status_code,
+            Some((blockchain.to_json().into_bytes(), mime::APPLICATION_JSON)),
+        )
+    };
+    Box::new(future::ok((state, res)))
 }
 
 pub fn say_hello(mut state: State) -> (State, Response) {
@@ -121,15 +97,13 @@ fn router() -> Router {
         blockchain: Blockchain::new(),
         candidates: Vec::new(),
     }));
-    let mw = ExampleMiddleware { state: state.clone() };
+    let mw = ExampleMiddleware { state: state };
     let (chain, pipelines) = single_pipeline(new_pipeline().add(mw).build());
 
     build_router(chain, pipelines, |route| {
         route.get("/").to(say_hello);
         route.get("/mine").to(say_hello);
-        route
-            .get("/blocks")
-            .to_new_handler(GetBlocksHandler::new(state.clone()));
+        route.get("/blocks").to(get_blocks_handler);
     })
 }
 
