@@ -51,8 +51,10 @@ fn calculate_proof_matches() {
         previous_block_hash: String::from("previous_hash"),
     };
 
-    let expected_proof: u64 = 8334;
-
     let proven_block = calculate_proof(&original_block, 4);
-    assert_eq!(expected_proof, proven_block.proof);
+
+    let block_as_json = proven_block.to_json();
+    let block_sha256 = digest(Algorithm::SHA256, block_as_json.as_bytes());
+    assert_eq!(0, block_sha256[0]);
+    assert_eq!(0, block_sha256[1]);
 }
