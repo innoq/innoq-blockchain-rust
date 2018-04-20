@@ -74,12 +74,7 @@ impl ToJSON for Block {
         add_property(&mut json, "timestamp", self.timestamp, false);
         add_property(&mut json, "proof", self.proof, false);
         add_property(&mut json, "transactions", &self.transactions, false);
-        add_property(
-            &mut json,
-            "previousBlockHash",
-            self.previous_block_hash.as_str(),
-            true,
-        );
+        add_property(&mut json, "previousBlockHash", self.previous_block_hash.as_str(), true);
         json.push_str("}");
         json
     }
