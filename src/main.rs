@@ -5,6 +5,7 @@ extern crate hyper;
 extern crate mime;
 extern crate rayon;
 
+use std::time::SystemTime;
 use std::sync::{Arc, Mutex};
 
 mod to_json;
@@ -13,7 +14,7 @@ mod calculate_proof;
 
 use hyper::{Response, StatusCode};
 use gotham::handler::HandlerFuture;
-use futures::future;
+use futures::{future, Stream};
 
 use gotham::middleware::{Middleware, NewMiddleware};
 use gotham::http::response::create_response;
@@ -24,6 +25,7 @@ use gotham::pipeline::single::single_pipeline;
 use block::{Blockchain, Transaction};
 use to_json::ToJSON;
 use gotham::state::{State, StateData};
+use futures::Future;
 
 #[derive(Debug)]
 struct ServerState {
@@ -31,17 +33,11 @@ struct ServerState {
     candidates: Vec<Transaction>,
 }
 
-impl ServerState {
-    fn update(&mut self, blockchain: Blockchain) {
-        self.blockchain = blockchain;
-    }
-}
+fn get_blocks_handler(mut state: State) -> Box<HandlerFuture> {
+    let mut server_state = state.borrow_mut::<InjectedStateData>().state.clone();
+    let mut status_code = StatusCode::Ok;
 
-fn get_blocks_handler(state: State) -> Box<HandlerFuture> {
-    let server_state = state.borrow::<InjectedStateData>().state.clone();
-    let status_code = StatusCode::Ok;
-
-    let blockchain = &server_state.lock().unwrap().blockchain;
+    let mut blockchain = &server_state.lock().unwrap().blockchain;
 
     let res = {
         create_response(
@@ -53,32 +49,76 @@ fn get_blocks_handler(state: State) -> Box<HandlerFuture> {
     Box::new(future::ok((state, res)))
 }
 
-fn mine_handler(mut state: State) -> Box<HandlerFuture> {
-    let arc = state.borrow_mut::<InjectedStateData>().state.clone();
-    let mut server_state = arc.lock().unwrap();
-    let status_code = StatusCode::Created;
+fn add_transaction(mut state: State) -> Box<HandlerFuture> {
+    let mut server_state = state.borrow_mut::<InjectedStateData>().state.clone();
 
-    let block = server_state.blockchain.generate_next_block();
-    let new_chain = server_state.blockchain.add(block);
-    server_state.update(new_chain);
+    let mut candidates = &server_state.lock().unwrap().candidates;
 
-    let res = {
-        create_response(
+    let body = state.take::<hyper::Body>().concat2();
+
+    let full_body = body.map(|b| format!("{:?}", b)).map_err(|_| String::from("Kaboom"));
+    let tuple_state_res = full_body.map(|body| {
+        let res = create_response(
             &state,
-            status_code,
-            Some((server_state.blockchain.to_json().into_bytes(), mime::APPLICATION_JSON)),
-        )
-    };
-    Box::new(future::ok((state, res)))
+            StatusCode::Ok,
+            Some((body.into_bytes(), mime::APPLICATION_JSON))
+        );
+        (state, res)
+    });
+
+
+    Box::new(future::ok(tuple_state_res.f))
+
+    // let res = body.map(|src| {
+    //             create_response(
+    //                 &state,
+    //                 StatusCode::Ok,
+    //                 Some((format!("{:?}", src).into_bytes(), mime::APPLICATION_JSON)),
+    //             )
+    // }).or_else(|_|{
+    //             create_response(
+    //                 &state,
+    //                 StatusCode::NotAcceptable,
+    //                 Some((format!("error occurred").into_bytes(), mime::APPLICATION_JSON)),
+    //             )
+    // });
+    // Box::new(future::ok((state, res)))
+
+
+    // match body.wait() {
+    //     Ok(src) => {
+    //         let res = {
+    //             create_response(
+    //                 &state,
+    //                 StatusCode::Ok,
+    //                 Some((format!("{:?}", src).into_bytes(), mime::APPLICATION_JSON)),
+    //             )
+    //         };
+    //         Box::new(future::ok((state, res)))
+    //     }
+    //     Err(e) => {
+    //         let res = {
+    //             create_response(
+    //                 &state,
+    //                 StatusCode::NotAcceptable,
+    //                 Some((format!("error occurred {:?}", e).into_bytes(), mime::APPLICATION_JSON)),
+    //             )
+    //         };
+    //         Box::new(future::ok((state, res)))
+    //     }
+    // }
 }
 
 pub fn say_hello(mut state: State) -> (State, Response) {
-    let server_state = state.borrow_mut::<InjectedStateData>().state.clone();
+    let mut server_state = state.borrow_mut::<InjectedStateData>().state.clone();
     eprintln!("{:?}", server_state.lock().unwrap().blockchain);
     let res = create_response(
         &state,
         StatusCode::Ok,
-        Some((String::from("Hello World!").into_bytes(), mime::TEXT_PLAIN)),
+        Some((
+            String::from("Hello World!").into_bytes(),
+            mime::TEXT_PLAIN,
+        )),
     );
 
     (state, res)
@@ -105,8 +145,8 @@ impl StateData for InjectedStateData {}
 
 impl Middleware for StateInjectingMiddleware {
     fn call<Chain>(self, mut state: State, chain: Chain) -> Box<HandlerFuture>
-    where
-        Chain: FnOnce(State) -> Box<HandlerFuture>,
+        where
+            Chain: FnOnce(State) -> Box<HandlerFuture>,
     {
         state.put(InjectedStateData {
             state: self.state.clone(),
@@ -126,8 +166,9 @@ fn router() -> Router {
 
     build_router(chain, pipelines, |route| {
         route.get("/").to(say_hello);
-        route.get("/mine").to(mine_handler);
+        route.get("/mine").to(say_hello);
         route.get("/blocks").to(get_blocks_handler);
+        route.post("/transactions").to(add_transaction);
     })
 }
 
