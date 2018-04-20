@@ -7,15 +7,15 @@ use block::Block;
 use to_json::ToJSON;
 
 fn prove_range(block: &Block, number_of_zeroes: usize, range: Range<u64>) -> Option<Block> {
-    let template_proof = 123456789;
-    let template_str = template_proof.to_string();
-    let template_json = block.with_proof(template_proof).to_json();
+    const TEMPLATE_STR: &'static str = "\"proof\":123456789";
+    let template_json = block.with_proof(123456789).to_json();
     for proof in range {
-        let json = str::replace(&template_json, &template_str, &proof.to_string());
+        let substr = format!("\"proof\":{}", proof);
+        let json = str::replace(&template_json, TEMPLATE_STR, &substr);
         let block_sha256 = digest(Algorithm::SHA256, json.as_bytes());
         let all_zero = block_sha256.into_iter()
             .take(number_of_zeroes / 2)
-            .all(|value| value.eq(&0));
+            .all(|value| value == 0);
         if all_zero {
             return Some(block.with_proof(proof));
         }
