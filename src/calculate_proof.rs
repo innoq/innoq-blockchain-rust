@@ -9,7 +9,9 @@ fn calculate_proof(block: &Block, number_of_zeroes: usize) -> Block {
         let new_block = block.with_proof(proof);
         let block_as_json = new_block.to_json();
         let block_sha256 = digest(Algorithm::SHA256, block_as_json.as_bytes());
-        let all_zero = (0..number_of_zeroes).all(|value| block_sha256.index(value).eq(&0));
+        let all_zero = block_sha256.into_iter()
+            .take(number_of_zeroes)
+            .all(|value| value.eq(&0x0));
         if all_zero {
             return new_block;
         }
