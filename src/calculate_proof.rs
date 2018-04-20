@@ -11,8 +11,8 @@ fn prove_range(block: &Block, number_of_zeroes: usize, range: Range<u64>) -> Opt
         let block_as_json = new_block.to_json();
         let block_sha256 = digest(Algorithm::SHA256, block_as_json.as_bytes());
         let all_zero = block_sha256.into_iter()
-            .take(number_of_zeroes)
-            .all(|value| value.eq(&0x0));
+            .take(number_of_zeroes / 2)
+            .all(|value| value.eq(&0));
         if all_zero {
             return Some(new_block);
         }
@@ -54,6 +54,5 @@ fn calculate_proof_matches() {
     let expected_proof: u64 = 8334;
 
     let proven_block = calculate_proof(&original_block, 2);
-    println!("{:?}", proven_block);
     assert_eq!(expected_proof, proven_block.proof);
 }
