@@ -33,7 +33,7 @@ struct ServerState {
 }
 
 fn get_blocks_handler(mut state: State) -> Box<HandlerFuture> {
-    let mut server_state = state.borrow_mut::<ExampleMiddlewareData>().state.clone();
+    let mut server_state = state.borrow_mut::<InjectedStateData>().state.clone();
     let mut status_code = StatusCode::Ok;
 
     let mut blockchain = &server_state.lock().unwrap().blockchain;
@@ -49,7 +49,7 @@ fn get_blocks_handler(mut state: State) -> Box<HandlerFuture> {
 }
 
 pub fn say_hello(mut state: State) -> (State, Response) {
-    let mut server_state = state.borrow_mut::<ExampleMiddlewareData>().state.clone();
+    let mut server_state = state.borrow_mut::<InjectedStateData>().state.clone();
     eprintln!("{:?}", server_state.lock().unwrap().blockchain);
     let res = create_response(
         &state,
@@ -61,11 +61,11 @@ pub fn say_hello(mut state: State) -> (State, Response) {
 }
 
 #[derive(Clone)]
-pub struct ExampleMiddleware {
+pub struct StateInjectingMiddleware {
     state: Arc<Mutex<ServerState>>,
 }
 
-impl NewMiddleware for ExampleMiddleware {
+impl NewMiddleware for StateInjectingMiddleware {
     type Instance = Self;
 
     fn new_middleware(&self) -> std::io::Result<Self::Instance> {
@@ -73,18 +73,18 @@ impl NewMiddleware for ExampleMiddleware {
     }
 }
 
-pub struct ExampleMiddlewareData {
+pub struct InjectedStateData {
     state: Arc<Mutex<ServerState>>,
 }
 
-impl StateData for ExampleMiddlewareData {}
+impl StateData for InjectedStateData {}
 
-impl Middleware for ExampleMiddleware {
+impl Middleware for StateInjectingMiddleware {
     fn call<Chain>(self, mut state: State, chain: Chain) -> Box<HandlerFuture>
     where
         Chain: FnOnce(State) -> Box<HandlerFuture>,
     {
-        state.put(ExampleMiddlewareData {
+        state.put(InjectedStateData {
             state: self.state.clone(),
         });
 
@@ -97,7 +97,7 @@ fn router() -> Router {
         blockchain: Blockchain::new(),
         candidates: Vec::new(),
     }));
-    let mw = ExampleMiddleware { state: state };
+    let mw = StateInjectingMiddleware { state: state };
     let (chain, pipelines) = single_pipeline(new_pipeline().add(mw).build());
 
     build_router(chain, pipelines, |route| {
