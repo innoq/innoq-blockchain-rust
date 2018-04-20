@@ -1,20 +1,23 @@
 use crypto_hash::{Algorithm, digest};
 use std::ops::Range;
+use std::str;
 use rayon::prelude::*;
 
 use block::Block;
 use to_json::ToJSON;
 
 fn prove_range(block: &Block, number_of_zeroes: usize, range: Range<u64>) -> Option<Block> {
+    let template_proof = 123456789;
+    let template_str = template_proof.to_string();
+    let template_json = block.with_proof(template_proof).to_json();
     for proof in range {
-        let new_block = block.with_proof(proof);
-        let block_as_json = new_block.to_json();
-        let block_sha256 = digest(Algorithm::SHA256, block_as_json.as_bytes());
+        let json = str::replace(&template_json, &template_str, &proof.to_string());
+        let block_sha256 = digest(Algorithm::SHA256, json.as_bytes());
         let all_zero = block_sha256.into_iter()
             .take(number_of_zeroes / 2)
             .all(|value| value.eq(&0));
         if all_zero {
-            return Some(new_block);
+            return Some(block.with_proof(proof));
         }
     }
     None
