@@ -1,5 +1,4 @@
 use crypto_hash::{Algorithm, digest};
-use std::ops::Index;
 
 use block::Block;
 use to_json::ToJSON;
@@ -38,5 +37,6 @@ fn calculate_proof_matches() {
     let expected_proof: u64 = 8334;
 
     let proven_block = calculate_proof(&original_block, 2);
+    println!("{:?}", proven_block);
     assert_eq!(expected_proof, proven_block.proof);
 }
